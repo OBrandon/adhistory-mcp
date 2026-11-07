@@ -19,7 +19,8 @@ from .apify import run_actor, shape_items
 
 INSTRUCTIONS = (
     "Tools that run adhistory's Apify Actors: Google Ads Transparency Center ads, App Store and "
-    "Google Play reviews, Workday and Greenhouse/Lever/Ashby job exports, PDF table, bank "
+    "Google Play reviews, Workday and Greenhouse/Lever/Ashby job exports, remote jobs from six "
+    "remote job boards, PDF table, bank "
     "statement and invoice extraction, email list cleaning, website screenshots and broken link "
     "checks. Each call runs on the user's Apify account and costs cents at the default limits; "
     "keep limits small unless the user asks for more."
@@ -282,6 +283,74 @@ async def ats_jobs(
             "remoteOnly": remote_only,
             "includeDescription": include_description,
             "maxItemsPerBoard": max_items_per_board,
+            "maxItems": max_items,
+        },
+        timeout_s=180,
+        limit=max_items,
+    )
+    return shape_items(items, actor=actor, max_items=max_items)
+
+
+RemoteBoard = Literal["remotive", "remoteok", "weworkremotely", "jobicy", "himalayas", "arbeitnow"]
+
+
+@mcp.tool(
+    title="Remote jobs from 6 job boards",
+    annotations=READ_ONLY,
+    description=(
+        "List current remote jobs from Remotive, Remote OK, We Work Remotely, Jobicy, Himalayas and Arbeitnow in "
+        "one deduplicated list (same company + title is returned once), newest first. Each item: board "
+        "(sourceName, sourceUrl), title, company, allowed location, job type, pay as posted plus parsed "
+        "salaryMin/salaryMax/salaryCurrency/salaryPeriod and a yearly figure (salaryYearlyMin/Max), posted date, "
+        "job and apply URLs, optional description text. Filter by keywords, location, age and pay. Returns what "
+        "those six boards currently list, not the whole web; currencies are not converted. "
+        "Cost: $1.00 per 1,000 jobs on the user's Apify account; the default 20 jobs cost $0.02. "
+        "Latency: usually 5-30 s."
+    ),
+)
+async def remote_jobs(
+    search_text: Annotated[
+        str | None,
+        Field(description="Optional. Keep jobs whose title, company, category or tags contain all these words, e.g. 'python developer'."),
+    ] = None,
+    location_contains: Annotated[
+        str | None, Field(description="Optional. Keep jobs whose allowed-location text contains this, e.g. Europe, USA, Worldwide.")
+    ] = None,
+    posted_within_days: Annotated[
+        int | None, Field(ge=1, le=365, description="Optional. Only jobs posted in the last N days.")
+    ] = None,
+    sources: Annotated[
+        list[RemoteBoard] | None,
+        Field(min_length=1, max_length=6, description="Optional. Boards to read; default all six."),
+    ] = None,
+    salary_only: Annotated[bool, Field(description="Keep only jobs that show pay.")] = False,
+    min_yearly_salary: Annotated[
+        int | None,
+        Field(ge=1, description="Optional. Keep jobs whose top pay, as a yearly amount in the job's own currency, is at least this."),
+    ] = None,
+    include_description: Annotated[bool, Field(description="Add the job description text. Same price.")] = False,
+    only_new_since_last_run: Annotated[
+        bool,
+        Field(description="Skip jobs returned by an earlier run on this Apify account (for daily new-job feeds)."),
+    ] = False,
+    max_items_per_source: Annotated[
+        int | None, Field(ge=1, le=200, description="Optional cap per board so one big board does not use the whole limit.")
+    ] = None,
+    max_items: Annotated[int, Field(ge=1, le=200, description="Stop after this many jobs in total.")] = 20,
+) -> dict[str, Any]:
+    actor = "remote-jobs-aggregator"
+    items = await run_actor(
+        actor,
+        {
+            "sources": sources,
+            "searchText": search_text,
+            "locationContains": location_contains,
+            "postedWithinDays": posted_within_days,
+            "salaryOnly": salary_only,
+            "minYearlySalary": min_yearly_salary,
+            "includeDescription": include_description,
+            "onlyNewSinceLastRun": only_new_since_last_run,
+            "maxItemsPerSource": max_items_per_source,
             "maxItems": max_items,
         },
         timeout_s=180,

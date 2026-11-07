@@ -2,10 +2,21 @@
 
 <!-- mcp-name: io.github.OBrandon/adhistory-mcp -->
 
-An MCP server that gives AI agents (Claude, Cursor and any other MCP client) ten data tools:
-competitor ads from the Google Ads Transparency Center, App Store and Google Play reviews, job
-listings from Workday, Greenhouse, Lever and Ashby, tables, invoices and bank statements from PDF
-links, email list cleaning, website screenshots and broken link checks.
+An MCP server that gives AI agents (Claude Desktop, Claude Code, Cursor and any other MCP client)
+eleven data tools for jobs people actually ask an assistant to do:
+
+- **Competitor Google ads**: the Search, YouTube, Shopping and Display ads any company runs, from
+  the Google Ads Transparency Center.
+- **App reviews**: App Store and Google Play reviews, filterable to 1-2 star complaints.
+- **Job postings**: open jobs from Workday career sites, Greenhouse, Lever and Ashby boards, and
+  remote jobs from six remote job boards (Remotive, Remote OK, We Work Remotely, Jobicy, Himalayas,
+  Arbeitnow) with pay parsed.
+- **PDF tables**: tables from PDF links as rows, plus CSV and Excel.
+- **Bank statements**: statement PDFs as transactions, balances and a balance check.
+- **Invoices**: invoice PDFs as number, dates, vendor, totals, tax and line items.
+- **Email list cleaning**: syntax, MX, disposable, role-account and typo checks.
+- **Website screenshots**: full-page or first-screen images of public pages.
+- **Broken links**: crawl a site and list broken links, images and scripts.
 
 Each tool runs one public [Apify](https://apify.com/adhistory) Actor on your own Apify account and
 returns the results as JSON, trimmed so they fit in an agent's context. You need a free Apify API
@@ -74,6 +85,7 @@ environment variable `APIFY_TOKEN`. Without `uv`: `pip install adhistory-mcp`, t
 | `app_reviews` | App Store and Google Play reviews: rating, title, text, date, app version, developer reply. Star filter for complaints only. | $0.10 | 20 per app | 10-40 s |
 | `workday_jobs` | Open jobs from any `*.myworkdayjobs.com` career site; optional description, pay range, apply link. | $1.00 | 20 jobs | 10-60 s |
 | `ats_jobs` | Open jobs from Greenhouse, Lever and Ashby boards: department, location, remote flag, pay when published. | $1.50 | 20 jobs | 5-30 s |
+| `remote_jobs` | Remote jobs from Remotive, Remote OK, We Work Remotely, Jobicy, Himalayas and Arbeitnow, deduplicated: company, allowed location, posted date, apply link, pay parsed to min/max/currency/period and a yearly figure. Filters for keywords, location, age and minimum pay. | $1.00 | 20 jobs | 5-30 s |
 | `pdf_tables` | Tables from PDF links as rows, plus CSV and Excel links. | $2.00 | 10 tables | 10-60 s |
 | `bank_statement` | Bank statement PDFs as balances, totals, a balance check and transactions, plus Excel. | $15.00 | 5 statements | 10-40 s |
 | `invoice` | Invoice PDFs as number, dates, vendor, totals, tax and line items, plus Excel. | $5.00 | 10 invoices | 10-30 s |
@@ -95,6 +107,8 @@ at the time of writing; the Store page of each Actor is the source of truth.
   → `workday_jobs(career_site_urls=["https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite"], search_text="software", location_contains="Remote", posted_within_days=7)`
 - "Which data roles are open at Airbnb and Palantir?"
   → `ats_jobs(boards=["https://boards.greenhouse.io/airbnb", "https://jobs.lever.co/palantir"], search_text="data")`
+- "Find remote Python jobs posted this week that pay at least $120k."
+  → `remote_jobs(search_text="python", posted_within_days=7, min_yearly_salary=120000)`
 - "Pull the table on pages 1-3 of this PDF into rows." → `pdf_tables(pdf_urls=["https://.../report.pdf"], pages="1-3")`
 - "Total the debits in this statement by merchant." → `bank_statement(pdf_urls=["https://.../statement.pdf"])`
 - "Which of these emails will likely bounce?" → `clean_email_list(emails=[...])`
@@ -122,6 +136,8 @@ at the time of writing; the Store page of each Actor is the source of truth.
 - `competitor_google_ads` reads what Google publishes in the Transparency Center. Google does not
   publish ad spend, keywords or click data.
 - Pages behind a login are not supported by `website_screenshot` and `broken_links`.
+- `remote_jobs` returns what the six remote boards list right now, not every remote job on the
+  web. Pay is parsed from the posting where the board has no pay field; currencies are not converted.
 
 ## Privacy
 

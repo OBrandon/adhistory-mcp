@@ -20,6 +20,7 @@ EXPECTED_TOOLS = {
     "app_reviews",
     "workday_jobs",
     "ats_jobs",
+    "remote_jobs",
     "pdf_tables",
     "bank_statement",
     "invoice",
@@ -107,6 +108,21 @@ CASES = [
         {"boards": ["https://boards.greenhouse.io/airbnb"], "remote_only": True, "max_items": 7},
         "ats-jobs-export",
         {"boards": ["https://boards.greenhouse.io/airbnb"], "remoteOnly": True, "maxItems": 7},
+    ),
+    (
+        "remote_jobs",
+        {"search_text": "python", "posted_within_days": 7, "sources": ["remoteok", "himalayas"], "min_yearly_salary": 100000},
+        "remote-jobs-aggregator",
+        {
+            "sources": ["remoteok", "himalayas"],
+            "searchText": "python",
+            "postedWithinDays": 7,
+            "salaryOnly": False,
+            "minYearlySalary": 100000,
+            "includeDescription": False,
+            "onlyNewSinceLastRun": False,
+            "maxItems": 20,
+        },
     ),
     (
         "pdf_tables",
@@ -273,3 +289,21 @@ def test_shape_items_trims_text_lists_html_and_size():
 def test_shape_items_caps_item_count():
     out = shape_items([{"i": i} for i in range(50)], actor="a", max_items=5)
     assert out["itemCount"] == 5 and out["totalItemsFromRun"] == 50
+
+
+@respx.mock
+async def test_remote_jobs_defaults_read_all_boards(token):
+    route = respx.post(url("remote-jobs-aggregator")).mock(return_value=httpx.Response(201, json=[]))
+    async with Client(mcp) as client:
+        result = await client.call_tool("remote_jobs", {})
+    assert not result.is_error, text_of(result)
+    req = route.calls.last.request
+    sent = json.loads(req.content)
+    assert "sources" not in sent  # Actor default: all six boards
+    assert sent["maxItems"] == 20 and req.url.params["limit"] == "20"
+
+
+async def test_remote_jobs_rejects_unknown_board(token):
+    async with Client(mcp) as client:
+        result = await client.call_tool("remote_jobs", {"sources": ["linkedin"]})
+    assert result.is_error

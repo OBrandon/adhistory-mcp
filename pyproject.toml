@@ -1,17 +1,62 @@
 [project]
 name = "adhistory-mcp"
-version = "0.1.0"
-description = "MCP server: Google Ads Transparency Center ads, app reviews, job boards, PDF tables/invoices/bank statements, email list cleaning, screenshots and broken links, via Apify."
+version = "0.2.1"
+description = "MCP server for AI agents: competitor Google ads, App Store/Google Play reviews, jobs from Workday/Greenhouse/Lever/Ashby and remote job boards, PDF tables, bank statements, invoices, email list cleaning, screenshots and broken links, via Apify."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [{ name = "adhistory" }]
-keywords = ["mcp", "model-context-protocol", "apify", "google-ads", "ads-transparency", "app-reviews", "jobs", "pdf", "ai-agents"]
+keywords = [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "claude",
+    "cursor",
+    "ai-agents",
+    "llm-tools",
+    "apify",
+    "web-scraping",
+    "google-ads",
+    "ads-transparency-center",
+    "competitor-ads",
+    "app-reviews",
+    "app-store",
+    "google-play",
+    "job-postings",
+    "jobs-api",
+    "workday",
+    "greenhouse",
+    "lever",
+    "ashby",
+    "remote-jobs",
+    "pdf-tables",
+    "pdf-to-excel",
+    "bank-statement",
+    "invoice-parser",
+    "email-validation",
+    "email-list-cleaning",
+    "screenshot",
+    "broken-link-checker",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Environment :: Console",
     "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Office/Business",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Communications :: Email",
     "Topic :: Software Development :: Libraries",
 ]
 dependencies = [
@@ -21,7 +66,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://apify.com/adhistory"
+Homepage = "https://github.com/OBrandon/adhistory-mcp"
+Repository = "https://github.com/OBrandon/adhistory-mcp"
+Issues = "https://github.com/OBrandon/adhistory-mcp/issues"
+"Apify Store" = "https://apify.com/adhistory"
+"MCP Registry" = "https://registry.modelcontextprotocol.io/v0/servers?search=io.github.OBrandon/adhistory-mcp"
 
 [project.scripts]
 adhistory-mcp = "adhistory_mcp.server:main"
