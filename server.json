@@ -1,0 +1,37 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.OBrandon/adhistory-mcp",
+  "title": "adhistory: Google Ads, reviews, jobs, PDFs",
+  "description": "Competitor Google ads, app reviews, job boards, PDF tables/invoices, email checks via Apify",
+  "version": "0.1.0",
+  "websiteUrl": "https://apify.com/adhistory",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "adhistory-mcp",
+      "version": "0.1.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "APIFY_TOKEN",
+          "description": "Your Apify API token (free account): console.apify.com -> Settings -> API & Integrations",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "APIFY_MAX_CHARGE_USD",
+          "description": "Optional cost cap per tool call in USD (default 0.50)",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "number",
+          "default": "0.50"
+        }
+      ]
+    }
+  ]
+}

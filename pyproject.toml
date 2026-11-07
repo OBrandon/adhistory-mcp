@@ -1,0 +1,45 @@
+[project]
+name = "adhistory-mcp"
+version = "0.1.0"
+description = "MCP server: Google Ads Transparency Center ads, app reviews, job boards, PDF tables/invoices/bank statements, email list cleaning, screenshots and broken links, via Apify."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "adhistory" }]
+keywords = ["mcp", "model-context-protocol", "apify", "google-ads", "ads-transparency", "app-reviews", "jobs", "pdf", "ai-agents"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "mcp>=2.3,<3",
+    "httpx>=0.27",
+    "pydantic>=2.7",
+]
+
+[project.urls]
+Homepage = "https://apify.com/adhistory"
+
+[project.scripts]
+adhistory-mcp = "adhistory_mcp.server:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "respx>=0.21"]
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/adhistory_mcp"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/adhistory_mcp", "README.md", "LICENSE", "server.json", "tests"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
