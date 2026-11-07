@@ -1,6 +1,6 @@
 [project]
 name = "adhistory-mcp"
-version = "0.2.1"
+version = "0.3.0"
 description = "MCP server for AI agents: competitor Google ads, App Store/Google Play reviews, jobs from Workday/Greenhouse/Lever/Ashby and remote job boards, PDF tables, bank statements, invoices, email list cleaning, screenshots and broken links, via Apify."
 readme = "README.md"
 license = "MIT"

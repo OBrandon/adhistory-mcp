@@ -21,7 +21,7 @@ INSTRUCTIONS = (
     "Tools that run adhistory's Apify Actors: Google Ads Transparency Center ads, App Store and "
     "Google Play reviews, Workday and Greenhouse/Lever/Ashby job exports, remote jobs from six "
     "remote job boards, PDF table, bank "
-    "statement and invoice extraction, email list cleaning, website screenshots and broken link "
+    "statement, invoice, payslip and table-image extraction, email list cleaning, website screenshots and broken link "
     "checks. Each call runs on the user's Apify account and costs cents at the default limits; "
     "keep limits small unless the user asks for more."
 )
@@ -466,6 +466,60 @@ async def invoice(
         limit=max_invoices,
     )
     return shape_items(items, actor=actor, max_items=max_invoices, max_list=50, max_str=300)
+
+
+@mcp.tool(
+    title="Payslip PDF to data",
+    annotations=READ_ONLY,
+    description=(
+        "Read payslip PDFs at public URLs into structured data. Each item is one payslip: employee, employer, "
+        "pay period and pay date, gross pay, tax, deductions, net pay, earnings lines (hours, rate, amount) and "
+        "deduction lines, plus an Excel link. Text-based PDFs only, not scans. "
+        "Cost: $5.00 per 1,000 payslips ($0.005 each) on the user's Apify account. Latency: usually 10-30 s."
+    ),
+)
+async def payslip(
+    pdf_urls: PdfUrls,
+    extract_lines: Annotated[bool, Field(description="Also read earnings and deduction rows. Off = header fields and totals only.")] = True,
+    pdf_password: PdfPassword = None,
+    max_payslips: Annotated[int, Field(ge=1, le=50, description="Stop after this many payslips.")] = 10,
+) -> dict[str, Any]:
+    actor = "payslip-pdf-to-excel"
+    items = await run_actor(
+        actor,
+        {"pdfUrls": pdf_urls, "extractLines": extract_lines, "pdfPassword": pdf_password, "maxItems": max_payslips},
+        timeout_s=240,
+        limit=max_payslips,
+    )
+    return shape_items(items, actor=actor, max_items=max_payslips, max_list=50, max_str=300)
+
+
+@mcp.tool(
+    title="Table in an image to data",
+    annotations=READ_ONLY,
+    description=(
+        "Read tables out of pictures (screenshots, photos of printed tables; PNG, JPG, WEBP, BMP, TIFF) at public "
+        "URLs using OCR. Each item is one table: rows and columns as text, the OCR confidence, plus CSV and Excel "
+        "links. Honest limit: OCR can misread small or blurry text, so check numbers that matter. "
+        "Cost: $2.00 per 1,000 tables ($0.002 each) on the user's Apify account. Latency: usually 10-40 s."
+    ),
+)
+async def image_tables(
+    image_urls: Annotated[
+        list[str],
+        Field(min_length=1, max_length=20, description="Direct public links to table images (https://...)."),
+    ],
+    first_row_is_header: Annotated[bool, Field(description="Use the first row as column names.")] = True,
+    max_tables: Annotated[int, Field(ge=1, le=20, description="Stop after this many tables.")] = 5,
+) -> dict[str, Any]:
+    actor = "image-tables-to-excel"
+    items = await run_actor(
+        actor,
+        {"imageUrls": image_urls, "firstRowIsHeader": first_row_is_header, "maxItems": max_tables},
+        timeout_s=240,
+        limit=max_tables,
+    )
+    return shape_items(items, actor=actor, max_items=max_tables, max_list=100, max_str=200)
 
 
 # --------------------------------------------------------------------------------------------

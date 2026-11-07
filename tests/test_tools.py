@@ -24,6 +24,8 @@ EXPECTED_TOOLS = {
     "pdf_tables",
     "bank_statement",
     "invoice",
+    "payslip",
+    "image_tables",
     "clean_email_list",
     "website_screenshot",
     "broken_links",
@@ -141,6 +143,18 @@ CASES = [
         {"pdf_urls": ["https://example.com/i.pdf"], "extract_line_items": False},
         "invoice-pdf-to-excel",
         {"pdfUrls": ["https://example.com/i.pdf"], "extractLineItems": False, "maxItems": 10},
+    ),
+    (
+        "payslip",
+        {"pdf_urls": ["https://example.com/p.pdf"], "extract_lines": False},
+        "payslip-pdf-to-excel",
+        {"pdfUrls": ["https://example.com/p.pdf"], "extractLines": False, "maxItems": 10},
+    ),
+    (
+        "image_tables",
+        {"image_urls": ["https://example.com/t.png"]},
+        "image-tables-to-excel",
+        {"imageUrls": ["https://example.com/t.png"], "firstRowIsHeader": True, "maxItems": 5},
     ),
     (
         "clean_email_list",

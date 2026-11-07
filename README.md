@@ -14,6 +14,8 @@ eleven data tools for jobs people actually ask an assistant to do:
 - **PDF tables**: tables from PDF links as rows, plus CSV and Excel.
 - **Bank statements**: statement PDFs as transactions, balances and a balance check.
 - **Invoices**: invoice PDFs as number, dates, vendor, totals, tax and line items.
+- **Payslips**: payslip PDFs as gross, tax, deductions, net pay and earnings lines.
+- **Table images**: tables in screenshots or photos as rows, via OCR.
 - **Email list cleaning**: syntax, MX, disposable, role-account and typo checks.
 - **Website screenshots**: full-page or first-screen images of public pages.
 - **Broken links**: crawl a site and list broken links, images and scripts.
@@ -89,6 +91,8 @@ environment variable `APIFY_TOKEN`. Without `uv`: `pip install adhistory-mcp`, t
 | `pdf_tables` | Tables from PDF links as rows, plus CSV and Excel links. | $2.00 | 10 tables | 10-60 s |
 | `bank_statement` | Bank statement PDFs as balances, totals, a balance check and transactions, plus Excel. | $15.00 | 5 statements | 10-40 s |
 | `invoice` | Invoice PDFs as number, dates, vendor, totals, tax and line items, plus Excel. | $5.00 | 10 invoices | 10-30 s |
+| `payslip` | Payslip PDFs as employee, pay period, gross, tax, deductions, net pay, earnings and deduction lines, plus Excel. | $5.00 | 10 payslips | 10-30 s |
+| `image_tables` | Tables in images (screenshots, photos) as rows and columns via OCR, plus CSV and Excel. | $2.00 | 5 tables | 10-40 s |
 | `clean_email_list` | Syntax, MX record, disposable, role account and typo checks per email, with a valid/invalid/risky/unknown result. | $0.20 | up to 1,000 emails | 5-30 s |
 | `website_screenshot` | Full-page or first-screen PNG/JPEG of public pages, returned as image URLs. | $1.00 | 1 per URL (max 10) | 10-30 s per page |
 | `broken_links` | Crawls a site and reports broken links, images and scripts with status, error and the pages they appear on. | $1.00 | 10 pages, problems only | 20-120 s |
@@ -111,6 +115,8 @@ at the time of writing; the Store page of each Actor is the source of truth.
   → `remote_jobs(search_text="python", posted_within_days=7, min_yearly_salary=120000)`
 - "Pull the table on pages 1-3 of this PDF into rows." → `pdf_tables(pdf_urls=["https://.../report.pdf"], pages="1-3")`
 - "Total the debits in this statement by merchant." → `bank_statement(pdf_urls=["https://.../statement.pdf"])`
+- "Turn these payslips into one net-pay-by-month table." → `payslip(pdf_urls=[...])`
+- "Get the table out of this screenshot." → `image_tables(image_urls=["https://.../table.png"])`
 - "Which of these emails will likely bounce?" → `clean_email_list(emails=[...])`
 - "Screenshot our pricing page on mobile." → `website_screenshot(urls=["example.com/pricing"], device="mobile")`
 - "Find broken links on example.com." → `broken_links(start_urls=["https://example.com"])`
