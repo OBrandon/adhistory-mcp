@@ -21,6 +21,7 @@ EXPECTED_TOOLS = {
     "workday_jobs",
     "ats_jobs",
     "remote_jobs",
+    "telegram_posts",
     "pdf_tables",
     "bank_statement",
     "invoice",
@@ -124,6 +125,18 @@ CASES = [
             "includeDescription": False,
             "onlyNewSinceLastRun": False,
             "maxItems": 20,
+        },
+    ),
+    (
+        "telegram_posts",
+        {"channels": ["durov"], "min_views": 1000, "max_items": 5},
+        "telegram-channel-posts-scraper",
+        {
+            "channels": ["durov"],
+            "maxPostsPerChannel": 20,
+            "minViews": 1000,
+            "onlyNewSinceLastRun": False,
+            "maxItems": 5,
         },
     ),
     (

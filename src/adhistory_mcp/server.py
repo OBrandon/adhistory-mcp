@@ -359,6 +359,55 @@ async def remote_jobs(
     return shape_items(items, actor=actor, max_items=max_items)
 
 
+@mcp.tool(
+    title="Public Telegram channel posts",
+    annotations=READ_ONLY,
+    description=(
+        "Read recent posts from public Telegram channels (the t.me/s web preview; no login, private channels and "
+        "groups cannot be read). Each item: channel, post link and id, text, date, views, reactions, links, "
+        "hashtags, mentions, emails, media flags, channel subscribers, plus analysis: views vs the channel's "
+        "median (viewsVsMedian), view rank, view and reaction rate, weekday and hour. Filter by keywords, age and "
+        "minimum views. Newest posts first; only what Telegram shows publicly. "
+        "Cost: $0.35 per 1,000 posts on the user's Apify account; the default 20 posts cost $0.007. "
+        "Latency: usually 5-30 s."
+    ),
+)
+async def telegram_posts(
+    channels: Annotated[
+        list[str],
+        Field(min_length=1, max_length=20, description="Public channels: username (durov), @username or https://t.me/name link."),
+    ],
+    max_posts_per_channel: Annotated[int, Field(ge=1, le=500, description="Newest posts to read per channel.")] = 20,
+    posted_within_days: Annotated[
+        int | None, Field(ge=1, le=3650, description="Optional. Stop at posts older than this many days.")
+    ] = None,
+    search_text: Annotated[
+        str | None, Field(description="Optional. Keep posts whose text contains all these words.")
+    ] = None,
+    min_views: Annotated[int | None, Field(ge=0, description="Optional. Keep posts with at least this many views.")] = None,
+    only_new_since_last_run: Annotated[
+        bool, Field(description="Skip posts returned by an earlier run on this Apify account.")
+    ] = False,
+    max_items: Annotated[int, Field(ge=1, le=200, description="Stop after this many posts in total.")] = 20,
+) -> dict[str, Any]:
+    actor = "telegram-channel-posts-scraper"
+    items = await run_actor(
+        actor,
+        {
+            "channels": channels,
+            "maxPostsPerChannel": max_posts_per_channel,
+            "postedWithinDays": posted_within_days,
+            "searchText": search_text,
+            "minViews": min_views,
+            "onlyNewSinceLastRun": only_new_since_last_run,
+            "maxItems": max_items,
+        },
+        timeout_s=180,
+        limit=max_items,
+    )
+    return shape_items(items, actor=actor, max_items=max_items)
+
+
 # --------------------------------------------------------------------------------------------
 # Documents (public PDF links)
 # --------------------------------------------------------------------------------------------

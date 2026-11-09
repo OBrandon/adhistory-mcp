@@ -88,6 +88,7 @@ environment variable `APIFY_TOKEN`. Without `uv`: `pip install adhistory-mcp`, t
 | `workday_jobs` | Open jobs from any `*.myworkdayjobs.com` career site; optional description, pay range, apply link. | $1.00 | 20 jobs | 10-60 s |
 | `ats_jobs` | Open jobs from Greenhouse, Lever and Ashby boards: department, location, remote flag, pay when published. | $1.50 | 20 jobs | 5-30 s |
 | `remote_jobs` | Remote jobs from Remotive, Remote OK, We Work Remotely, Jobicy, Himalayas and Arbeitnow, deduplicated: company, allowed location, posted date, apply link, pay parsed to min/max/currency/period and a yearly figure. Filters for keywords, location, age and minimum pay. | $1.00 | 20 jobs | 5-30 s |
+| `telegram_posts` | Posts from public Telegram channels: text, date, views, reactions, links, hashtags, plus views vs the channel median, view rate and best hour. Filters for keywords, age and minimum views. | $0.35 | 20 posts | 5-30 s |
 | `pdf_tables` | Tables from PDF links as rows, plus CSV and Excel links. | $2.00 | 10 tables | 10-60 s |
 | `bank_statement` | Bank statement PDFs as balances, totals, a balance check and transactions, plus Excel. | $15.00 | 5 statements | 10-40 s |
 | `invoice` | Invoice PDFs as number, dates, vendor, totals, tax and line items, plus Excel. | $5.00 | 10 invoices | 10-30 s |
@@ -113,6 +114,8 @@ at the time of writing; the Store page of each Actor is the source of truth.
   → `ats_jobs(boards=["https://boards.greenhouse.io/airbnb", "https://jobs.lever.co/palantir"], search_text="data")`
 - "Find remote Python jobs posted this week that pay at least $120k."
   → `remote_jobs(search_text="python", posted_within_days=7, min_yearly_salary=120000)`
+- "Which of these Telegram channels' posts got the most views this month?"
+  → `telegram_posts(channels=["durov", "telegram"], posted_within_days=30, min_views=100000)`
 - "Pull the table on pages 1-3 of this PDF into rows." → `pdf_tables(pdf_urls=["https://.../report.pdf"], pages="1-3")`
 - "Total the debits in this statement by merchant." → `bank_statement(pdf_urls=["https://.../statement.pdf"])`
 - "Turn these payslips into one net-pay-by-month table." → `payslip(pdf_urls=[...])`
