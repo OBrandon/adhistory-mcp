@@ -3,7 +3,7 @@
 <!-- mcp-name: io.github.OBrandon/adhistory-mcp -->
 
 An MCP server that gives AI agents (Claude Desktop, Claude Code, Cursor and any other MCP client)
-eleven data tools for jobs people actually ask an assistant to do:
+fifteen data tools for jobs people actually ask an assistant to do:
 
 - **Competitor Google ads**: the Search, YouTube, Shopping and Display ads any company runs, from
   the Google Ads Transparency Center.
@@ -97,6 +97,7 @@ environment variable `APIFY_TOKEN`. Without `uv`: `pip install adhistory-mcp`, t
 | `clean_email_list` | Syntax, MX record, disposable, role account and typo checks per email, with a valid/invalid/risky/unknown result. | $0.20 | up to 1,000 emails | 5-30 s |
 | `website_screenshot` | Full-page or first-screen PNG/JPEG of public pages, returned as image URLs. | $1.00 | 1 per URL (max 10) | 10-30 s per page |
 | `broken_links` | Crawls a site and reports broken links, images and scripts with status, error and the pages they appear on. | $1.00 | 10 pages, problems only | 20-120 s |
+| `read_google_sheet` | Rows from a public Google Sheet tab, keyed by column name. | $0.10 | 200 rows | 10-30 s |
 
 Each Actor also charges $0.00005 per run start. Prices are the Actors' public Apify Store prices
 at the time of writing; the Store page of each Actor is the source of truth.
@@ -123,6 +124,7 @@ at the time of writing; the Store page of each Actor is the source of truth.
 - "Which of these emails will likely bounce?" → `clean_email_list(emails=[...])`
 - "Screenshot our pricing page on mobile." → `website_screenshot(urls=["example.com/pricing"], device="mobile")`
 - "Find broken links on example.com." → `broken_links(start_urls=["https://example.com"])`
+- "Read the leads tab of this Google Sheet and find rows missing an email." → `read_google_sheet(spreadsheet="https://docs.google.com/spreadsheets/d/.../edit", sheet_name="leads")`
 
 ## Cost control
 

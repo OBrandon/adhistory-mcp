@@ -22,7 +22,7 @@ INSTRUCTIONS = (
     "Google Play reviews, Workday and Greenhouse/Lever/Ashby job exports, remote jobs from six "
     "remote job boards, PDF table, bank "
     "statement, invoice, payslip and table-image extraction, email list cleaning, website screenshots and broken link "
-    "checks. Each call runs on the user's Apify account and costs cents at the default limits; "
+    "checks, and reading public Google Sheets. Each call runs on the user's Apify account and costs cents at the default limits; "
     "keep limits small unless the user asks for more."
 )
 
@@ -697,6 +697,42 @@ async def broken_links(
         timeout_s=300,
     )
     return shape_items(items, actor=actor, max_items=200, max_list=5, max_str=300)
+
+
+@mcp.tool(
+    title="Read a public Google Sheet",
+    annotations=READ_ONLY,
+    description=(
+        "Read one tab of a Google Sheet into rows. Each item is one row as an object keyed by the header row's "
+        "column names; numbers come back as numbers. Works on sheets shared as 'Anyone with the link can view' "
+        "(no Google login or credentials); private sheets fail. Pick the tab by name, or by the #gid in the URL "
+        "(default: the first tab). "
+        "Cost: $0.10 per 1,000 rows on the user's Apify account; the default 200 rows cost about $0.02. "
+        "Latency: usually 10-30 s."
+    ),
+)
+async def read_google_sheet(
+    spreadsheet: Annotated[
+        str, Field(description="Google Sheets URL (https://docs.google.com/spreadsheets/d/.../edit#gid=...) or the spreadsheet ID.")
+    ],
+    sheet_name: Annotated[str | None, Field(description="Optional tab name. Empty uses the tab in the URL, else the first tab.")] = None,
+    header_row: Annotated[int, Field(ge=1, le=100, description="Row that holds the column names.")] = 1,
+    max_rows: Annotated[int, Field(ge=1, le=5000, description="Stop after this many data rows.")] = 200,
+) -> dict[str, Any]:
+    actor = "google-sheets-export-actor"
+    items = await run_actor(
+        actor,
+        {
+            "operation": "import",
+            "spreadsheet": spreadsheet,
+            "sheetName": sheet_name,
+            "headerRow": header_row,
+            "maxRows": max_rows,
+        },
+        timeout_s=180,
+        limit=max_rows,
+    )
+    return shape_items(items, actor=actor, max_items=max_rows, max_str=300)
 
 
 def main() -> None:

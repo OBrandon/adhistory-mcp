@@ -30,6 +30,7 @@ EXPECTED_TOOLS = {
     "clean_email_list",
     "website_screenshot",
     "broken_links",
+    "read_google_sheet",
 }
 
 
@@ -75,6 +76,12 @@ async def test_missing_token_gives_clear_error(monkeypatch):
 
 
 CASES = [
+    (
+        "read_google_sheet",
+        {"spreadsheet": "https://docs.google.com/spreadsheets/d/abc/edit#gid=0", "max_rows": 50},
+        "google-sheets-export-actor",
+        {"operation": "import", "spreadsheet": "https://docs.google.com/spreadsheets/d/abc/edit#gid=0", "headerRow": 1, "maxRows": 50},
+    ),
     (
         "competitor_google_ads",
         {"domains": ["booqable.com"], "max_ads_per_advertiser": 5, "country": "US", "platform": "search"},
