@@ -23,7 +23,8 @@ fifteen data tools for jobs people actually ask an assistant to do:
 Each tool runs one public [Apify](https://apify.com/adhistory) Actor on your own Apify account and
 returns the results as JSON, trimmed so they fit in an agent's context. You need a free Apify API
 token. You pay only the Actor's per-result price, which at the default limits is a few cents or less
-per call.
+per call, and Apify's free monthly platform credits cover your first runs, so you can try every tool
+without paying anything.
 
 ## Quick start
 
