@@ -11,13 +11,16 @@ fifteen data tools for jobs people actually ask an assistant to do:
 - **Job postings**: open jobs from Workday career sites, Greenhouse, Lever and Ashby boards, and
   remote jobs from six remote job boards (Remotive, Remote OK, We Work Remotely, Jobicy, Himalayas,
   Arbeitnow) with pay parsed.
+- **Telegram channels**: posts from public channels with views, reactions and links, and which
+  posts beat the channel's usual views.
+- **Google Sheets**: read a tab of a public Google Sheet as rows keyed by column name.
 - **PDF tables**: tables from PDF links as rows, plus CSV and Excel.
 - **Bank statements**: statement PDFs as transactions, balances and a balance check.
 - **Invoices**: invoice PDFs as number, dates, vendor, totals, tax and line items.
 - **Payslips**: payslip PDFs as gross, tax, deductions, net pay and earnings lines.
 - **Table images**: tables in screenshots or photos as rows, via OCR.
 - **Email list cleaning**: syntax, MX, disposable, role-account and typo checks.
-- **Website screenshots**: full-page or first-screen images of public pages.
+- **Website screenshots**: a full page screenshot (or first screen) of any public URL, as an image link.
 - **Broken links**: crawl a site and list broken links, images and scripts.
 
 Each tool runs one public [Apify](https://apify.com/adhistory) Actor on your own Apify account and

@@ -3,14 +3,14 @@
   "name": "io.github.OBrandon/adhistory-mcp",
   "title": "adhistory: Google Ads, reviews, jobs, PDFs",
   "description": "Competitor Google ads, app reviews, job boards, PDF tables/invoices, email checks via Apify",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "websiteUrl": "https://apify.com/adhistory",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "adhistory-mcp",
-      "version": "0.5.1",
+      "version": "0.5.2",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
