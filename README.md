@@ -3,7 +3,7 @@
 <!-- mcp-name: io.github.OBrandon/adhistory-mcp -->
 
 An MCP server that gives AI agents (Claude Desktop, Claude Code, Cursor and any other MCP client)
-twenty data tools: competitor Google ads, App Store and Google Play reviews, open jobs from Workday,
+nineteen data tools: competitor Google ads, App Store and Google Play reviews, open jobs from
 Greenhouse, Lever, Ashby, BambooHR and six remote job boards, public Telegram channel posts, FDA
 recalls, SEC EDGAR filings and key financials, journalist source requests (#JournoRequest), PDF tables,
 bank statements, invoices, payslips, tables in images, email list cleaning, website screenshots,
@@ -43,7 +43,7 @@ claude mcp add adhistory --env APIFY_TOKEN=apify_api_your_token_here -- uvx adhi
 - **Competitor Google ads**: the Search, YouTube, Shopping and Display ads any company runs, from
   the Google Ads Transparency Center.
 - **App reviews**: App Store and Google Play reviews, filterable to 1-2 star complaints.
-- **Job postings**: open jobs from Workday career sites, Greenhouse, Lever, Ashby and BambooHR
+- **Job postings**: open jobs from Greenhouse, Lever, Ashby and BambooHR
   careers pages, and remote jobs from six remote job boards (Remotive, Remote OK, We Work Remotely,
   Jobicy, Himalayas, Arbeitnow) with pay parsed.
 - **Telegram channels**: posts from public channels with views, reactions and links, and which
@@ -81,7 +81,6 @@ environment variable `APIFY_TOKEN`. Without `uv`: `pip install adhistory-mcp`, t
 |---|---|---|---|---|
 | `competitor_google_ads` | Ads a company runs on Google Search, YouTube, Shopping, Maps, Play and Display, from the Google Ads Transparency Center: headline and description of text ads, format, first/last shown, days running, countries, link. Or one summary row per domain (`mode: advertiserCheck`). | $1.00 | 20 ads per advertiser | 20-90 s |
 | `app_reviews` | App Store and Google Play reviews: rating, title, text, date, app version, developer reply. Star filter for complaints only. | $0.10 | 20 per app | 10-40 s |
-| `workday_jobs` | Open jobs from any `*.myworkdayjobs.com` career site; optional description, pay range, apply link. | $1.00 | 20 jobs | 10-60 s |
 | `ats_jobs` | Open jobs from Greenhouse, Lever and Ashby boards: department, location, remote flag, pay when published. | $1.50 | 20 jobs | 5-30 s |
 | `bamboohr_jobs` | Open jobs from BambooHR careers pages (`company.bamboohr.com/careers`): department, location, on-site/remote/hybrid; optional posted date, pay text and description. Same fields as `ats_jobs`. | $0.80 | 20 jobs | 5-30 s |
 | `remote_jobs` | Remote jobs from Remotive, Remote OK, We Work Remotely, Jobicy, Himalayas and Arbeitnow, deduplicated: company, allowed location, posted date, apply link, pay parsed to min/max/currency/period and a yearly figure. Filters for keywords, location, age and minimum pay. | $1.00 | 20 jobs | 5-30 s |
@@ -110,8 +109,6 @@ at the time of writing; the Store page of each Actor is the source of truth.
 - "Which of these 20 domains advertise on Google?" → `competitor_google_ads(domains=[...], mode="advertiserCheck")`
 - "Summarize the last 50 one- and two-star reviews of Notion on iOS and Android."
   → `app_reviews(apps=["notion", "notion.id"], max_reviews_per_app=25, max_rating=2)`
-- "List NVIDIA's remote software jobs posted this week."
-  → `workday_jobs(career_site_urls=["https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite"], search_text="software", location_contains="Remote", posted_within_days=7)`
 - "Which data roles are open at Airbnb and Palantir?"
   → `ats_jobs(boards=["https://boards.greenhouse.io/airbnb", "https://jobs.lever.co/palantir"], search_text="data")`
 - "What is Kiln hiring for on BambooHR, with posted dates?"

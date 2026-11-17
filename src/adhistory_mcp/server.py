@@ -194,53 +194,6 @@ async def app_reviews(
 
 
 @mcp.tool(
-    title="Workday jobs",
-    annotations=READ_ONLY,
-    description=(
-        "List open jobs from any company's Workday career site (*.myworkdayjobs.com). Each item: title, "
-        "requisition id, location, posted-on text, job URL, company; with include_description also job type, "
-        "remote type, country, apply link, stated pay range and description text. "
-        "Cost: $1.00 per 1,000 jobs on the user's Apify account; the default 20 jobs cost $0.02. "
-        "Latency: usually 10-60 s (longer with descriptions)."
-    ),
-)
-async def workday_jobs(
-    career_site_urls: Annotated[
-        list[str],
-        Field(
-            min_length=1,
-            max_length=10,
-            description="Workday jobs pages, e.g. https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite",
-        ),
-    ],
-    search_text: Annotated[str | None, Field(description="Optional keywords, same as the site's search box.")] = None,
-    location_contains: Annotated[str | None, Field(description="Optional. Keep jobs whose location contains this.")] = None,
-    posted_within_days: Annotated[
-        int | None, Field(ge=1, le=365, description="Optional. Only jobs posted in the last N days.")
-    ] = None,
-    include_description: Annotated[
-        bool, Field(description="Load full description, pay range and apply link. Slower, same price.")
-    ] = False,
-    max_items: Annotated[int, Field(ge=1, le=200, description="Stop after this many jobs in total.")] = 20,
-) -> dict[str, Any]:
-    actor = "workday-jobs-export"
-    items = await run_actor(
-        actor,
-        {
-            "careerSiteUrls": career_site_urls,
-            "searchText": search_text,
-            "locationContains": location_contains,
-            "postedWithinDays": posted_within_days,
-            "includeDescription": include_description,
-            "maxItems": max_items,
-        },
-        timeout_s=240,
-        limit=max_items,
-    )
-    return shape_items(items, actor=actor, max_items=max_items)
-
-
-@mcp.tool(
     title="Greenhouse, Lever & Ashby jobs",
     annotations=READ_ONLY,
     description=(

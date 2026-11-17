@@ -18,7 +18,6 @@ FAKE_TOKEN = "apify_api_FAKE_TEST_TOKEN_123"
 EXPECTED_TOOLS = {
     "competitor_google_ads",
     "app_reviews",
-    "workday_jobs",
     "ats_jobs",
     "remote_jobs",
     "telegram_posts",
@@ -106,17 +105,6 @@ CASES = [
         {"apps": ["com.spotify.music"], "max_reviews_per_app": 5, "max_rating": 2},
         "app-store-google-play-reviews-scraper",
         {"apps": ["com.spotify.music"], "countries": ["us"], "maxReviewsPerApp": 5, "minRating": 1, "maxRating": 2},
-    ),
-    (
-        "workday_jobs",
-        {"career_site_urls": ["https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite"], "search_text": "rust"},
-        "workday-jobs-export",
-        {
-            "careerSiteUrls": ["https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite"],
-            "searchText": "rust",
-            "includeDescription": False,
-            "maxItems": 20,
-        },
     ),
     (
         "ats_jobs",
