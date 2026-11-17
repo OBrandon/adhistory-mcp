@@ -31,6 +31,11 @@ EXPECTED_TOOLS = {
     "website_screenshot",
     "broken_links",
     "read_google_sheet",
+    "bamboohr_jobs",
+    "fda_recalls",
+    "sec_filings",
+    "ssl_certificates",
+    "journalist_requests",
 }
 
 
@@ -194,6 +199,70 @@ CASES = [
         "broken-link-checker",
         {"startUrls": ["https://example.com"], "onlyBroken": True, "maxPages": 10, "maxDepth": 2},
     ),
+    (
+        "bamboohr_jobs",
+        {"companies": ["https://kiln.bamboohr.com/careers", "lucid"], "remote_only": True, "max_items": 7},
+        "bamboohr-jobs-export",
+        {
+            "companies": ["https://kiln.bamboohr.com/careers", "lucid"],
+            "remoteOnly": True,
+            "includeDescription": False,
+            "maxItems": 7,
+        },
+    ),
+    (
+        "fda_recalls",
+        {"categories": ["food"], "keywords": ["listeria"], "classifications": ["Class I"]},
+        "fda-recalls-export",
+        {
+            "categories": ["food"],
+            "keywords": ["listeria"],
+            "lastDays": 30,
+            "dateField": "reportDate",
+            "classifications": ["Class I"],
+            "onlyNewSinceLastRun": False,
+            "maxResults": 20,
+        },
+    ),
+    (
+        "sec_filings",
+        {"companies": ["AAPL"], "form_types": ["8-K"], "date_from": "2026-01-01"},
+        "sec-edgar-filings-export",
+        {
+            "companies": ["AAPL"],
+            "mode": "filings",
+            "formTypes": ["8-K"],
+            "includeAmendments": True,
+            "dateFrom": "2026-01-01",
+            "maxFilingsPerCompany": 10,
+            "maxItems": 20,
+        },
+    ),
+    (
+        "ssl_certificates",
+        {"domains": ["example.com", "mail.example.com:993"], "only_problems": True},
+        "ssl-certificate-checker",
+        {
+            "domains": ["example.com", "mail.example.com:993"],
+            "port": 443,
+            "expiryWarningDays": 30,
+            "onlyProblems": True,
+            "timeoutSecs": 10,
+        },
+    ),
+    (
+        "journalist_requests",
+        {"keywords": ["finance"], "skip_expired": True, "sources": ["bluesky"]},
+        "journalist-requests-feed",
+        {
+            "keywords": ["finance"],
+            "postedWithinDays": 7,
+            "skipExpired": True,
+            "onlyNewSinceLastRun": False,
+            "sources": ["bluesky"],
+            "maxItems": 20,
+        },
+    ),
 ]
 
 
@@ -340,4 +409,21 @@ async def test_remote_jobs_defaults_read_all_boards(token):
 async def test_remote_jobs_rejects_unknown_board(token):
     async with Client(mcp) as client:
         result = await client.call_tool("remote_jobs", {"sources": ["linkedin"]})
+    assert result.is_error
+
+
+@respx.mock
+async def test_ssl_status_counts_and_limit(token):
+    items = [{"domain": "a.com", "status": "OK"}, {"domain": "b.com", "status": "EXPIRED"}, {"domain": "c.com", "status": "OK"}]
+    route = respx.post(url("ssl-certificate-checker")).mock(return_value=httpx.Response(201, json=items))
+    async with Client(mcp) as client:
+        result = await client.call_tool("ssl_certificates", {"domains": ["a.com", "b.com", "c.com"]})
+    assert not result.is_error, text_of(result)
+    assert route.calls.last.request.url.params["limit"] == "3"
+    assert payload(result)["statusCounts"] == {"OK": 2, "EXPIRED": 1}
+
+
+async def test_fda_rejects_unknown_category(token):
+    async with Client(mcp) as client:
+        result = await client.call_tool("fda_recalls", {"categories": ["meat"]})
     assert result.is_error

@@ -3,16 +3,57 @@
 <!-- mcp-name: io.github.OBrandon/adhistory-mcp -->
 
 An MCP server that gives AI agents (Claude Desktop, Claude Code, Cursor and any other MCP client)
-fifteen data tools for jobs people actually ask an assistant to do:
+twenty data tools: competitor Google ads, App Store and Google Play reviews, open jobs from Workday,
+Greenhouse, Lever, Ashby, BambooHR and six remote job boards, public Telegram channel posts, FDA
+recalls, SEC EDGAR filings and key financials, journalist source requests (#JournoRequest), PDF tables,
+bank statements, invoices, payslips, tables in images, email list cleaning, website screenshots,
+broken links, SSL certificate checks and public Google Sheets.
+
+## Install
+
+Paste this into Claude Desktop's `claude_desktop_config.json` (Settings → Developer → Edit Config)
+or Cursor's `~/.cursor/mcp.json`, with your Apify API token
+(**console.apify.com → Settings → API & Integrations**; a free account at
+<https://console.apify.com/sign-up> is enough):
+
+```json
+{
+  "mcpServers": {
+    "adhistory": {
+      "command": "uvx",
+      "args": ["adhistory-mcp"],
+      "env": { "APIFY_TOKEN": "apify_api_your_token_here" }
+    }
+  }
+}
+```
+
+Apify's free monthly credits cover your first runs, so you can try every tool without paying
+anything. Restart the client and the tools appear. `uvx` comes with [uv](https://docs.astral.sh/uv/)
+(`curl -LsSf https://astral.sh/uv/install.sh | sh` on macOS/Linux, or `brew install uv`).
+
+Claude Code:
+
+```bash
+claude mcp add adhistory --env APIFY_TOKEN=apify_api_your_token_here -- uvx adhistory-mcp
+```
+
+## What it does
 
 - **Competitor Google ads**: the Search, YouTube, Shopping and Display ads any company runs, from
   the Google Ads Transparency Center.
 - **App reviews**: App Store and Google Play reviews, filterable to 1-2 star complaints.
-- **Job postings**: open jobs from Workday career sites, Greenhouse, Lever and Ashby boards, and
-  remote jobs from six remote job boards (Remotive, Remote OK, We Work Remotely, Jobicy, Himalayas,
-  Arbeitnow) with pay parsed.
+- **Job postings**: open jobs from Workday career sites, Greenhouse, Lever, Ashby and BambooHR
+  careers pages, and remote jobs from six remote job boards (Remotive, Remote OK, We Work Remotely,
+  Jobicy, Himalayas, Arbeitnow) with pay parsed.
 - **Telegram channels**: posts from public channels with views, reactions and links, and which
   posts beat the channel's usual views.
+- **FDA recalls**: food, drug and medical device recalls with class, firm, product, lot codes and
+  reason, from openFDA.
+- **SEC filings**: 10-K, 10-Q, 8-K, Form 4 and other EDGAR filings by ticker or CIK with document
+  links, or XBRL key financials (revenue, net income, EPS, assets) per 10-K/10-Q.
+- **Journalist requests**: #JournoRequest-style source requests from Bluesky and Mastodon, with
+  deadline, outlet, request type and topics parsed.
 - **Google Sheets**: read a tab of a public Google Sheet as rows keyed by column name.
 - **PDF tables**: tables from PDF links as rows, plus CSV and Excel.
 - **Bank statements**: statement PDFs as transactions, balances and a balance check.
@@ -22,62 +63,13 @@ fifteen data tools for jobs people actually ask an assistant to do:
 - **Email list cleaning**: syntax, MX, disposable, role-account and typo checks.
 - **Website screenshots**: a full page screenshot (or first screen) of any public URL, as an image link.
 - **Broken links**: crawl a site and list broken links, images and scripts.
+- **SSL certificates**: days until expiry, issuer, hostname match and chain trust for a list of domains.
 
 Each tool runs one public [Apify](https://apify.com/adhistory) Actor on your own Apify account and
-returns the results as JSON, trimmed so they fit in an agent's context. You need a free Apify API
-token. You pay only the Actor's per-result price, which at the default limits is a few cents or less
-per call, and Apify's free monthly platform credits cover your first runs, so you can try every tool
-without paying anything.
+returns the results as JSON, trimmed so they fit in an agent's context. You pay only the Actor's
+per-result price, which at the default limits is a few cents or less per call.
 
-## Quick start
-
-1. Create a free Apify account at <https://console.apify.com/sign-up>.
-2. Copy your API token: **console.apify.com → Settings → API & Integrations**.
-3. Add the server to your MCP client (examples below). It runs locally over stdio with
-   [`uvx`](https://docs.astral.sh/uv/), so you need `uv` installed
-   (`curl -LsSf https://astral.sh/uv/install.sh | sh` on macOS/Linux, or `brew install uv`).
-
-### Claude Desktop
-
-Edit `claude_desktop_config.json` (Settings → Developer → Edit Config):
-
-```json
-{
-  "mcpServers": {
-    "adhistory": {
-      "command": "uvx",
-      "args": ["adhistory-mcp"],
-      "env": { "APIFY_TOKEN": "apify_api_your_token_here" }
-    }
-  }
-}
-```
-
-Restart Claude Desktop. The tools appear under the tools icon.
-
-### Claude Code
-
-```bash
-claude mcp add adhistory --env APIFY_TOKEN=apify_api_your_token_here -- uvx adhistory-mcp
-```
-
-### Cursor
-
-Add to `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (one project):
-
-```json
-{
-  "mcpServers": {
-    "adhistory": {
-      "command": "uvx",
-      "args": ["adhistory-mcp"],
-      "env": { "APIFY_TOKEN": "apify_api_your_token_here" }
-    }
-  }
-}
-```
-
-### Other clients
+## Other MCP clients
 
 Any MCP client that can launch a stdio server works: command `uvx`, argument `adhistory-mcp`,
 environment variable `APIFY_TOKEN`. Without `uv`: `pip install adhistory-mcp`, then run
@@ -91,8 +83,12 @@ environment variable `APIFY_TOKEN`. Without `uv`: `pip install adhistory-mcp`, t
 | `app_reviews` | App Store and Google Play reviews: rating, title, text, date, app version, developer reply. Star filter for complaints only. | $0.10 | 20 per app | 10-40 s |
 | `workday_jobs` | Open jobs from any `*.myworkdayjobs.com` career site; optional description, pay range, apply link. | $1.00 | 20 jobs | 10-60 s |
 | `ats_jobs` | Open jobs from Greenhouse, Lever and Ashby boards: department, location, remote flag, pay when published. | $1.50 | 20 jobs | 5-30 s |
+| `bamboohr_jobs` | Open jobs from BambooHR careers pages (`company.bamboohr.com/careers`): department, location, on-site/remote/hybrid; optional posted date, pay text and description. Same fields as `ats_jobs`. | $0.80 | 20 jobs | 5-30 s |
 | `remote_jobs` | Remote jobs from Remotive, Remote OK, We Work Remotely, Jobicy, Himalayas and Arbeitnow, deduplicated: company, allowed location, posted date, apply link, pay parsed to min/max/currency/period and a yearly figure. Filters for keywords, location, age and minimum pay. | $1.00 | 20 jobs | 5-30 s |
 | `telegram_posts` | Posts from public Telegram channels: text, date, views, reactions, links, hashtags, plus views vs the channel median, view rate and best hour. Filters for keywords, age and minimum views. | $0.35 | 20 posts | 5-30 s |
+| `fda_recalls` | FDA food, drug and medical device recalls from openFDA: class, status, firm, product, lot codes, reason, distribution, dates. Filters for keywords, class, status, firm state and date range. | $1.00 | 20 recalls, last 30 days | 5-30 s |
+| `sec_filings` | SEC EDGAR filings by ticker or CIK: form, dates, accession number, 8-K items in plain English, document links. Or XBRL key financials per 10-K/10-Q (`mode: financials`). | $0.40 | 20 rows | 5-30 s |
+| `journalist_requests` | Journalist source requests (#JournoRequest, #PRrequest ...) from Bluesky and Mastodon: text, parsed deadline, outlet, request type, topics, how to respond. | $1.00 | 20 requests, last 7 days | 10-60 s |
 | `pdf_tables` | Tables from PDF links as rows, plus CSV and Excel links. | $2.00 | 10 tables | 10-60 s |
 | `bank_statement` | Bank statement PDFs as balances, totals, a balance check and transactions, plus Excel. | $15.00 | 5 statements | 10-40 s |
 | `invoice` | Invoice PDFs as number, dates, vendor, totals, tax and line items, plus Excel. | $5.00 | 10 invoices | 10-30 s |
@@ -101,6 +97,7 @@ environment variable `APIFY_TOKEN`. Without `uv`: `pip install adhistory-mcp`, t
 | `clean_email_list` | Syntax, MX record, disposable, role account and typo checks per email, with a valid/invalid/risky/unknown result. | $0.20 | up to 1,000 emails | 5-30 s |
 | `website_screenshot` | Full-page or first-screen PNG/JPEG of public pages, returned as image URLs. | $1.00 | 1 per URL (max 10) | 10-30 s per page |
 | `broken_links` | Crawls a site and reports broken links, images and scripts with status, error and the pages they appear on. | $1.00 | 10 pages, problems only | 20-120 s |
+| `ssl_certificates` | SSL/TLS certificate per domain: status (OK, EXPIRING_SOON, EXPIRED, INVALID, UNREACHABLE), days until expiry, issuer, SANs, hostname match, chain trust, TLS version. | $2.00 | 1 per domain (max 100) | 5-30 s |
 | `read_google_sheet` | Rows from a public Google Sheet tab, keyed by column name. | $0.10 | 200 rows | 10-30 s |
 
 Each Actor also charges $0.00005 per run start. Prices are the Actors' public Apify Store prices
@@ -117,10 +114,18 @@ at the time of writing; the Store page of each Actor is the source of truth.
   → `workday_jobs(career_site_urls=["https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite"], search_text="software", location_contains="Remote", posted_within_days=7)`
 - "Which data roles are open at Airbnb and Palantir?"
   → `ats_jobs(boards=["https://boards.greenhouse.io/airbnb", "https://jobs.lever.co/palantir"], search_text="data")`
+- "What is Kiln hiring for on BambooHR, with posted dates?"
+  → `bamboohr_jobs(companies=["https://kiln.bamboohr.com/careers"], include_description=true)`
 - "Find remote Python jobs posted this week that pay at least $120k."
   → `remote_jobs(search_text="python", posted_within_days=7, min_yearly_salary=120000)`
 - "Which of these Telegram channels' posts got the most views this month?"
   → `telegram_posts(channels=["durov", "telegram"], posted_within_days=30, min_views=100000)`
+- "Any Class I food recalls for listeria in the last 30 days?"
+  → `fda_recalls(categories=["food"], keywords=["listeria"], classifications=["Class I"])`
+- "List Apple's 8-K filings this year and what each was about."
+  → `sec_filings(companies=["AAPL"], form_types=["8-K"], date_from="2026-01-01")`
+- "Find open journalist requests about personal finance I can still answer."
+  → `journalist_requests(keywords=["finance", "mortgage"], skip_expired=true)`
 - "Pull the table on pages 1-3 of this PDF into rows." → `pdf_tables(pdf_urls=["https://.../report.pdf"], pages="1-3")`
 - "Total the debits in this statement by merchant." → `bank_statement(pdf_urls=["https://.../statement.pdf"])`
 - "Turn these payslips into one net-pay-by-month table." → `payslip(pdf_urls=[...])`
@@ -128,6 +133,8 @@ at the time of writing; the Store page of each Actor is the source of truth.
 - "Which of these emails will likely bounce?" → `clean_email_list(emails=[...])`
 - "Screenshot our pricing page on mobile." → `website_screenshot(urls=["example.com/pricing"], device="mobile")`
 - "Find broken links on example.com." → `broken_links(start_urls=["https://example.com"])`
+- "Which of our domains have SSL certificates expiring in the next 30 days?"
+  → `ssl_certificates(domains=["example.com", "shop.example.com"], only_problems=true)`
 - "Read the leads tab of this Google Sheet and find rows missing an email." → `read_google_sheet(spreadsheet="https://docs.google.com/spreadsheets/d/.../edit", sheet_name="leads")`
 
 ## Cost control
@@ -153,6 +160,12 @@ at the time of writing; the Store page of each Actor is the source of truth.
 - Pages behind a login are not supported by `website_screenshot` and `broken_links`.
 - `remote_jobs` returns what the six remote boards list right now, not every remote job on the
   web. Pay is parsed from the posting where the board has no pay field; currencies are not converted.
+- `fda_recalls` lists recalls after FDA classifies them (often 1 to a few weeks after the company's
+  announcement); USDA meat/poultry and CPSC consumer product recalls are not included.
+- `sec_filings` returns filing metadata and links, not the filing text.
+- `journalist_requests` reads public Bluesky and Mastodon hashtags only (not X, LinkedIn or paid
+  services); deadline, outlet and topics are parsed from free text on a best-effort basis.
+- `ssl_certificates` checks public hosts over plain TLS; no STARTTLS, revocation or cipher audit.
 
 ## Privacy
 

@@ -19,10 +19,11 @@ from .apify import run_actor, shape_items
 
 INSTRUCTIONS = (
     "Tools that run adhistory's Apify Actors: Google Ads Transparency Center ads, App Store and "
-    "Google Play reviews, Workday and Greenhouse/Lever/Ashby job exports, remote jobs from six "
-    "remote job boards, PDF table, bank "
-    "statement, invoice, payslip and table-image extraction, email list cleaning, website screenshots and broken link "
-    "checks, and reading public Google Sheets. Each call runs on the user's Apify account and costs cents at the default limits; "
+    "Google Play reviews, Workday, Greenhouse/Lever/Ashby and BambooHR job exports, remote jobs from six "
+    "remote job boards, public Telegram channel posts, FDA recalls, SEC EDGAR filings and key financials, "
+    "journalist source requests (#JournoRequest), PDF table, bank "
+    "statement, invoice, payslip and table-image extraction, email list cleaning, website screenshots, broken link "
+    "and SSL certificate checks, and reading public Google Sheets. Each call runs on the user's Apify account and costs cents at the default limits; "
     "keep limits small unless the user asks for more."
 )
 
@@ -291,6 +292,69 @@ async def ats_jobs(
     return shape_items(items, actor=actor, max_items=max_items)
 
 
+@mcp.tool(
+    title="BambooHR jobs",
+    annotations=READ_ONLY,
+    description=(
+        "List open jobs from company careers pages on BambooHR (company.bamboohr.com/careers). Each item: title, "
+        "company, department, employment type, city, state, country, location text, workplace type "
+        "(on-site/remote/hybrid), remote flag, job and apply URLs; with include_description also posted date, "
+        "minimum experience, pay text when the employer publishes it, and description text. Same field names as "
+        "ats_jobs. Honest limits: you supply the companies (it does not discover who uses BambooHR); companies "
+        "without a public careers page are skipped; most employers publish no pay. "
+        "Cost: $0.80 per 1,000 jobs on the user's Apify account; the default 20 jobs cost $0.016. "
+        "Latency: usually 5-30 s (longer with descriptions, about one request per job)."
+    ),
+)
+async def bamboohr_jobs(
+    companies: Annotated[
+        list[str],
+        Field(
+            min_length=1,
+            max_length=20,
+            description=(
+                "BambooHR careers links (https://kiln.bamboohr.com/careers), a job link from that page, "
+                "or just the part before .bamboohr.com (kiln)."
+            ),
+        ),
+    ],
+    search_text: Annotated[
+        str | None, Field(description="Optional. Keep jobs whose title or department contains all these words.")
+    ] = None,
+    location_contains: Annotated[
+        str | None, Field(description="Optional. Keep jobs whose city, state, country or workplace type contains this.")
+    ] = None,
+    department_contains: Annotated[
+        str | None, Field(description="Optional. Keep jobs whose department contains this, e.g. sales.")
+    ] = None,
+    remote_only: Annotated[bool, Field(description="Keep only jobs the employer marked as remote.")] = False,
+    include_description: Annotated[
+        bool, Field(description="Add posted date, pay text, minimum experience and description. Slower, same price.")
+    ] = False,
+    max_items_per_company: Annotated[
+        int | None, Field(ge=1, le=200, description="Optional cap per company so one big employer does not use the whole limit.")
+    ] = None,
+    max_items: Annotated[int, Field(ge=1, le=200, description="Stop after this many jobs in total.")] = 20,
+) -> dict[str, Any]:
+    actor = "bamboohr-jobs-export"
+    items = await run_actor(
+        actor,
+        {
+            "companies": companies,
+            "searchText": search_text,
+            "locationContains": location_contains,
+            "departmentContains": department_contains,
+            "remoteOnly": remote_only,
+            "includeDescription": include_description,
+            "maxItemsPerCompany": max_items_per_company,
+            "maxItems": max_items,
+        },
+        timeout_s=240,
+        limit=max_items,
+    )
+    return shape_items(items, actor=actor, max_items=max_items)
+
+
 RemoteBoard = Literal["remotive", "remoteok", "weworkremotely", "jobicy", "himalayas", "arbeitnow"]
 
 
@@ -400,6 +464,219 @@ async def telegram_posts(
             "searchText": search_text,
             "minViews": min_views,
             "onlyNewSinceLastRun": only_new_since_last_run,
+            "maxItems": max_items,
+        },
+        timeout_s=180,
+        limit=max_items,
+    )
+    return shape_items(items, actor=actor, max_items=max_items)
+
+
+# --------------------------------------------------------------------------------------------
+# Public records and media requests
+# --------------------------------------------------------------------------------------------
+
+
+FdaCategory = Literal["food", "drug", "device"]
+
+
+@mcp.tool(
+    title="FDA recalls (food, drug, device)",
+    annotations=READ_ONLY,
+    description=(
+        "List FDA recalls of food (incl. cosmetics and supplements), drugs and medical devices from the official "
+        "openFDA enforcement data. Each item is one recalled product: category, recall number, classification "
+        "(Class I is most serious), status, recalling firm and its address, product description, lot/code info, "
+        "reason for recall, distribution pattern, quantity, voluntary or mandated, recall initiation, "
+        "classification, report and termination dates, brand/generic/manufacturer names when openFDA links them, "
+        "and the openFDA source link. Filter by keywords (whole words in product, firm or reason), class, status, "
+        "firm state or country, and date range. Honest limits: recalls appear only after FDA classifies them "
+        "(often 1 to a few weeks after the company announcement); meat/poultry (USDA), consumer products (CPSC) and "
+        "vehicles (NHTSA) are not included; state/country filters use the firm's address, not where the product "
+        "was sold. "
+        "Cost: $1.00 per 1,000 recalls on the user's Apify account; the default 20 recalls cost $0.02. "
+        "Latency: usually 5-30 s."
+    ),
+)
+async def fda_recalls(
+    categories: Annotated[
+        list[FdaCategory] | None,
+        Field(min_length=1, max_length=3, description="Optional. Recall databases to read; default all three."),
+    ] = None,
+    keywords: Annotated[
+        list[str] | None,
+        Field(max_length=20, description="Optional. Keep recalls mentioning any of these, e.g. ['listeria', 'peanut']."),
+    ] = None,
+    last_days: Annotated[
+        int, Field(ge=0, le=36500, description="Recalls from the last N days. 0 = whole history since 2004. Ignored with date_from.")
+    ] = 30,
+    date_from: Annotated[str | None, Field(description="Optional start date, YYYY-MM-DD. Overrides last_days.")] = None,
+    date_to: Annotated[str | None, Field(description="Optional end date, YYYY-MM-DD.")] = None,
+    date_field: Annotated[
+        Literal["reportDate", "recallInitiationDate", "centerClassificationDate"],
+        Field(description="Which date the range applies to. reportDate = FDA weekly Enforcement Report date."),
+    ] = "reportDate",
+    classifications: Annotated[
+        list[Literal["Class I", "Class II", "Class III"]] | None,
+        Field(min_length=1, max_length=3, description="Optional. Keep only these classes."),
+    ] = None,
+    statuses: Annotated[
+        list[Literal["Ongoing", "Completed", "Terminated", "Pending"]] | None,
+        Field(min_length=1, max_length=4, description="Optional. Keep only these recall statuses."),
+    ] = None,
+    states: Annotated[
+        list[str] | None,
+        Field(max_length=60, description="Optional. Two-letter US state codes of the recalling firm, e.g. ['CA']."),
+    ] = None,
+    countries: Annotated[
+        list[str] | None,
+        Field(max_length=20, description="Optional. Recalling firm's country as FDA writes it, e.g. ['United States', 'India']."),
+    ] = None,
+    only_new_since_last_run: Annotated[
+        bool, Field(description="Skip recalls returned by an earlier run on this Apify account (for alert feeds).")
+    ] = False,
+    max_results: Annotated[int, Field(ge=1, le=500, description="Stop after this many recalls.")] = 20,
+) -> dict[str, Any]:
+    actor = "fda-recalls-export"
+    items = await run_actor(
+        actor,
+        {
+            "categories": categories,
+            "keywords": keywords,
+            "lastDays": last_days,
+            "dateFrom": date_from,
+            "dateTo": date_to,
+            "dateField": date_field,
+            "classifications": classifications,
+            "statuses": statuses,
+            "states": states,
+            "countries": countries,
+            "onlyNewSinceLastRun": only_new_since_last_run,
+            "maxResults": max_results,
+        },
+        timeout_s=180,
+        limit=max_results,
+    )
+    return shape_items(items, actor=actor, max_items=max_results, max_str=400)
+
+
+@mcp.tool(
+    title="SEC EDGAR filings and key financials",
+    annotations=READ_ONLY,
+    description=(
+        "List SEC EDGAR filings for companies by ticker or CIK, straight from SEC's free APIs. mode='filings': "
+        "each item is one filing with company name, CIK, ticker, form (10-K, 10-Q, 8-K, 4, S-1, DEF 14A, 13F-HR "
+        "...), filing date, report date, acceptance time, accession number, 8-K item numbers with plain-English "
+        "descriptions, links to the main document, filing index and folder, file number, size, XBRL flags, SIC "
+        "industry, exchange and state of incorporation. mode='financials': one row per 10-K/10-Q (or 20-F/40-F) "
+        "with XBRL key numbers: revenue, gross profit, operating income, net income, EPS basic/diluted, "
+        "operating cash flow, total assets and liabilities, equity, cash, long-term debt, shares outstanding, "
+        "currency. Newest first. Honest limits: metadata and links only, the filing text is not downloaded or "
+        "searched; XBRL fields can be empty when a company uses its own concept; delisted companies and many "
+        "funds need a CIK. "
+        "Cost: $0.40 per 1,000 rows (a filing, or a reporting period) on the user's Apify account; the default 20 "
+        "rows cost under a cent. Latency: usually 5-30 s (longer for old date ranges)."
+    ),
+)
+async def sec_filings(
+    companies: Annotated[
+        list[str],
+        Field(min_length=1, max_length=20, description="Tickers (AAPL, BRK-B), CIKs (320193) or exact SEC company names."),
+    ],
+    mode: Annotated[
+        Literal["filings", "financials"],
+        Field(description="'filings' lists filings; 'financials' returns XBRL key numbers per 10-K/10-Q."),
+    ] = "filings",
+    form_types: Annotated[
+        list[str] | None,
+        Field(max_length=20, description="Optional. Keep only these forms, e.g. ['10-K', '8-K', '4']. Empty = every form."),
+    ] = None,
+    include_amendments: Annotated[bool, Field(description="With 10-K also return 10-K/A, and so on.")] = True,
+    date_from: Annotated[str | None, Field(description="Optional. Filed on or after, YYYY-MM-DD.")] = None,
+    date_to: Annotated[str | None, Field(description="Optional. Filed on or before, YYYY-MM-DD.")] = None,
+    max_filings_per_company: Annotated[
+        int, Field(ge=1, le=500, description="Newest first. In financials mode, reporting periods per company.")
+    ] = 10,
+    max_items: Annotated[int, Field(ge=1, le=500, description="Stop after this many rows in total.")] = 20,
+) -> dict[str, Any]:
+    actor = "sec-edgar-filings-export"
+    items = await run_actor(
+        actor,
+        {
+            "companies": companies,
+            "mode": mode,
+            "formTypes": form_types,
+            "includeAmendments": include_amendments,
+            "dateFrom": date_from,
+            "dateTo": date_to,
+            "maxFilingsPerCompany": max_filings_per_company,
+            "maxItems": max_items,
+        },
+        timeout_s=180,
+        limit=max_items,
+    )
+    return shape_items(items, actor=actor, max_items=max_items, max_str=400)
+
+
+@mcp.tool(
+    title="Journalist requests (#JournoRequest feed)",
+    annotations=READ_ONLY,
+    description=(
+        "List recent journalist source requests (#JournoRequest, #PRrequest, #MediaRequest and similar) posted on "
+        "Bluesky and Mastodon, newest first, with duplicates merged. Each item: source, post URL, posted date, "
+        "text, author handle, hashtags, language, parsed deadline (date and original text) and expired flag, "
+        "outlet, request type (expert comment / case study / product / other), topics, how to respond (link, "
+        "email or DM), links and emails in the post, the request service that posted it, times posted and other "
+        "post links, likes/reposts/replies. Filter by keywords, age and deadline. Honest limits: roughly 3-10 new "
+        "requests a day across the default hashtags; X/Twitter, LinkedIn and paid services (HARO/Connectively, "
+        "Qwoted, Featured) are not included; deadline, outlet, type and topics are parsed from free text on a "
+        "best-effort basis, so read the request before pitching. "
+        "Cost: $1.00 per 1,000 requests on the user's Apify account; the default 20 requests cost $0.02. "
+        "Latency: usually 10-60 s."
+    ),
+)
+async def journalist_requests(
+    keywords: Annotated[
+        list[str] | None,
+        Field(max_length=20, description="Optional. Keep requests mentioning any of these words, e.g. ['finance', 'startup']."),
+    ] = None,
+    exclude_keywords: Annotated[
+        list[str] | None, Field(max_length=20, description="Optional. Drop requests mentioning any of these words.")
+    ] = None,
+    posted_within_days: Annotated[
+        int, Field(ge=1, le=365, description="Only requests posted in the last N days.")
+    ] = 7,
+    skip_expired: Annotated[
+        bool, Field(description="Drop requests whose deadline has passed (requests with no deadline are kept).")
+    ] = False,
+    sources: Annotated[
+        list[Literal["bluesky", "mastodon"]] | None,
+        Field(min_length=1, max_length=2, description="Optional. Networks to read; default both."),
+    ] = None,
+    hashtags: Annotated[
+        list[str] | None,
+        Field(max_length=20, description="Optional. Hashtags to read instead of the defaults (journorequest, prrequest, ...)."),
+    ] = None,
+    languages: Annotated[
+        list[str] | None, Field(max_length=10, description="Optional. Two-letter language codes to keep, e.g. ['en'].")
+    ] = None,
+    only_new_since_last_run: Annotated[
+        bool, Field(description="Skip requests returned by an earlier run on this Apify account (for daily alerts).")
+    ] = False,
+    max_items: Annotated[int, Field(ge=1, le=200, description="Stop after this many requests.")] = 20,
+) -> dict[str, Any]:
+    actor = "journalist-requests-feed"
+    items = await run_actor(
+        actor,
+        {
+            "hashtags": hashtags,
+            "postedWithinDays": posted_within_days,
+            "keywords": keywords,
+            "excludeKeywords": exclude_keywords,
+            "skipExpired": skip_expired,
+            "onlyNewSinceLastRun": only_new_since_last_run,
+            "sources": sources,
+            "languages": languages,
             "maxItems": max_items,
         },
         timeout_s=180,
@@ -697,6 +974,58 @@ async def broken_links(
         timeout_s=300,
     )
     return shape_items(items, actor=actor, max_items=200, max_list=5, max_str=300)
+
+
+@mcp.tool(
+    title="SSL certificate checker",
+    annotations=READ_ONLY,
+    description=(
+        "Check the SSL/TLS certificate of domains by opening a real TLS connection (port 443 by default). Each item "
+        "is one domain: status (OK / EXPIRING_SOON / EXPIRED / INVALID / UNREACHABLE), problems and error text, days "
+        "until expiry, valid from/to, issuer, subject, SAN list, hostname match, chain trusted (Mozilla CA bundle) "
+        "and verify error, self-signed flag, TLS version, cipher, key type and size, signature algorithm, serial, "
+        "SHA-256 fingerprint, IP and handshake time. Honest limits: public hosts only; no STARTTLS (use ports "
+        "465/993/995, not 25/587); no revocation (OCSP/CRL) or cipher-suite audit. "
+        "Cost: $2.00 per 1,000 domains ($0.002 each) on the user's Apify account; with only_problems, OK domains "
+        "are not charged. Latency: usually 5-30 s."
+    ),
+)
+async def ssl_certificates(
+    domains: Annotated[
+        list[str],
+        Field(
+            min_length=1,
+            max_length=100,
+            description="Domains, hostnames or URLs, e.g. example.com, https://shop.example.com/cart, mail.example.com:993.",
+        ),
+    ],
+    port: Annotated[int, Field(ge=1, le=65535, description="TLS port for entries without their own :port.")] = 443,
+    expiry_warning_days: Annotated[
+        int, Field(ge=0, le=3650, description="Certificates expiring within this many days get EXPIRING_SOON.")
+    ] = 30,
+    only_problems: Annotated[bool, Field(description="Return only domains whose status is not OK.")] = False,
+    timeout_secs: Annotated[
+        int, Field(ge=1, le=60, description="Connection and handshake timeout per domain before UNREACHABLE.")
+    ] = 10,
+) -> dict[str, Any]:
+    actor = "ssl-certificate-checker"
+    items = await run_actor(
+        actor,
+        {
+            "domains": domains,
+            "port": port,
+            "expiryWarningDays": expiry_warning_days,
+            "onlyProblems": only_problems,
+            "timeoutSecs": timeout_secs,
+        },
+        timeout_s=180,
+        limit=len(domains),
+    )
+    summary: dict[str, int] = {}
+    for item in items:
+        key = str(item.get("status", "UNKNOWN"))
+        summary[key] = summary.get(key, 0) + 1
+    return shape_items(items, actor=actor, max_items=len(domains), max_list=10, extra={"statusCounts": summary})
 
 
 @mcp.tool(
