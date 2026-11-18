@@ -308,6 +308,154 @@ async def bamboohr_jobs(
     return shape_items(items, actor=actor, max_items=max_items)
 
 
+@mcp.tool(
+    title="Workable jobs",
+    annotations=READ_ONLY,
+    description=(
+        "List open jobs from company career pages on Workable (apply.workable.com/company). Each item: title, "
+        "company, account, department, job function, employment type, experience level, city, region, country, "
+        "country code, other locations of the same job, workplace type (remote/hybrid/on_site), remote flag, "
+        "posted date (day only), job and apply URLs; with include_description also the description as text. "
+        "Same field names as ats_jobs. Honest limits: you supply the companies (it does not discover who uses "
+        "Workable); Workable publishes no pay, so pay is always empty; companies with no open jobs return nothing. "
+        "Cost: $1.00 per 1,000 jobs on the user's Apify account; the default 20 jobs cost $0.02. "
+        "Latency: usually 5-30 s (one request per company plus one per job)."
+    ),
+)
+async def workable_jobs(
+    accounts: Annotated[
+        list[str],
+        Field(
+            min_length=1,
+            max_length=20,
+            description=(
+                "Workable career page links (https://apply.workable.com/skroutz), a job link from that page, "
+                "or just the account name from the address (skroutz)."
+            ),
+        ),
+    ],
+    keywords: Annotated[
+        list[str] | None,
+        Field(description="Optional. Keep jobs whose title, department or job function contains any of these words."),
+    ] = None,
+    departments: Annotated[
+        list[str] | None, Field(description="Optional. Keep jobs whose department contains one of these words.")
+    ] = None,
+    location_contains: Annotated[
+        str | None,
+        Field(description="Optional. Keep jobs whose city, region, country or two-letter country code contains this."),
+    ] = None,
+    remote_only: Annotated[bool, Field(description="Keep only jobs the employer marked as remote.")] = False,
+    workplace_types: Annotated[
+        list[Literal["remote", "hybrid", "on_site"]] | None,
+        Field(description="Optional. Keep only these workplace types."),
+    ] = None,
+    include_description: Annotated[
+        bool, Field(description="Add the full description as text and HTML. Larger output, same price.")
+    ] = False,
+    max_items_per_company: Annotated[
+        int | None, Field(ge=1, le=200, description="Optional cap per company so one big employer does not use the whole limit.")
+    ] = None,
+    max_items: Annotated[int, Field(ge=1, le=200, description="Stop after this many jobs in total.")] = 20,
+) -> dict[str, Any]:
+    actor = "workable-jobs-export"
+    items = await run_actor(
+        actor,
+        {
+            "accounts": accounts,
+            "keywords": keywords,
+            "departments": departments,
+            "locationContains": location_contains,
+            "remoteOnly": remote_only,
+            "workplaceTypes": workplace_types,
+            "includeDescription": include_description,
+            "maxItemsPerAccount": max_items_per_company,
+            "maxItems": max_items,
+        },
+        timeout_s=240,
+        limit=max_items,
+    )
+    return shape_items(items, actor=actor, max_items=max_items)
+
+
+@mcp.tool(
+    title="Personio jobs",
+    annotations=READ_ONLY,
+    description=(
+        "List open jobs from company career pages on Personio (company.jobs.personio.de or .com). Each item: "
+        "title, company (legal entity), account, department, team, office and additional offices, remote flag, "
+        "employment type (permanent, internship, working student, trainee, fixed-term), schedule (full-/part-time), "
+        "seniority, years of experience, keyword tags, posted date, salary min/max/currency/period plus a yearly "
+        "figure and salaryText when the employer publishes it, job and apply URLs; with include_description also "
+        "the description by section and as text. Same field names as ats_jobs. Honest limits: you supply the "
+        "companies (it does not discover who uses Personio); most employers publish no salary; remote is read from "
+        "the office name; texts are often German unless language='en' and the employer translated them. "
+        "Cost: $0.80 per 1,000 jobs on the user's Apify account; the default 20 jobs cost $0.016. "
+        "Latency: usually 5-20 s (one request per company)."
+    ),
+)
+async def personio_jobs(
+    companies: Annotated[
+        list[str],
+        Field(
+            min_length=1,
+            max_length=20,
+            description=(
+                "Personio career page links (https://tado.jobs.personio.de), a job link from that page, "
+                "or just the part before .jobs.personio (tado)."
+            ),
+        ),
+    ],
+    keywords: Annotated[
+        list[str] | None,
+        Field(description="Optional. Keep jobs whose title, department, team or keyword tags contain any of these words."),
+    ] = None,
+    departments: Annotated[
+        list[str] | None, Field(description="Optional. Keep jobs whose department contains one of these words.")
+    ] = None,
+    location_contains: Annotated[
+        str | None, Field(description="Optional. Keep jobs whose main or additional office contains this, e.g. Berlin.")
+    ] = None,
+    remote_only: Annotated[bool, Field(description="Keep only jobs whose office is Remote, Home office or similar.")] = False,
+    employment_types: Annotated[
+        list[str] | None,
+        Field(description="Optional, e.g. permanent, intern, working_student, trainee, fixed_term, part-time."),
+    ] = None,
+    with_salary_only: Annotated[bool, Field(description="Keep only jobs with a published salary.")] = False,
+    language: Annotated[
+        str | None,
+        Field(pattern=r"^[a-z]{2}$", description="Optional two-letter code, e.g. en, for translated job texts."),
+    ] = None,
+    include_description: Annotated[
+        bool, Field(description="Add the description by section and as text and HTML. Larger output, same price.")
+    ] = False,
+    max_items_per_company: Annotated[
+        int | None, Field(ge=1, le=200, description="Optional cap per company so one big employer does not use the whole limit.")
+    ] = None,
+    max_items: Annotated[int, Field(ge=1, le=200, description="Stop after this many jobs in total.")] = 20,
+) -> dict[str, Any]:
+    actor = "personio-jobs-export"
+    items = await run_actor(
+        actor,
+        {
+            "companies": companies,
+            "keywords": keywords,
+            "departments": departments,
+            "locationContains": location_contains,
+            "remoteOnly": remote_only,
+            "employmentTypes": employment_types,
+            "withSalaryOnly": with_salary_only,
+            "language": language,
+            "includeDescription": include_description,
+            "maxItemsPerCompany": max_items_per_company,
+            "maxItems": max_items,
+        },
+        timeout_s=240,
+        limit=max_items,
+    )
+    return shape_items(items, actor=actor, max_items=max_items)
+
+
 RemoteBoard = Literal["remotive", "remoteok", "weworkremotely", "jobicy", "himalayas", "arbeitnow"]
 
 

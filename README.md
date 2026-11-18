@@ -3,8 +3,8 @@
 <!-- mcp-name: io.github.OBrandon/adhistory-mcp -->
 
 An MCP server that gives AI agents (Claude Desktop, Claude Code, Cursor and any other MCP client)
-nineteen data tools: competitor Google ads, App Store and Google Play reviews, open jobs from
-Greenhouse, Lever, Ashby, BambooHR and six remote job boards, public Telegram channel posts, FDA
+twenty-one data tools: competitor Google ads, App Store and Google Play reviews, open jobs from
+Greenhouse, Lever, Ashby, BambooHR, Workable, Personio and six remote job boards, public Telegram channel posts, FDA
 recalls, SEC EDGAR filings and key financials, journalist source requests (#JournoRequest), PDF tables,
 bank statements, invoices, payslips, tables in images, email list cleaning, website screenshots,
 broken links, SSL certificate checks and public Google Sheets.
@@ -43,8 +43,8 @@ claude mcp add adhistory --env APIFY_TOKEN=apify_api_your_token_here -- uvx adhi
 - **Competitor Google ads**: the Search, YouTube, Shopping and Display ads any company runs, from
   the Google Ads Transparency Center.
 - **App reviews**: App Store and Google Play reviews, filterable to 1-2 star complaints.
-- **Job postings**: open jobs from Greenhouse, Lever, Ashby and BambooHR
-  careers pages, and remote jobs from six remote job boards (Remotive, Remote OK, We Work Remotely,
+- **Job postings**: open jobs from Greenhouse, Lever, Ashby, BambooHR, Workable and
+  Personio careers pages, and remote jobs from six remote job boards (Remotive, Remote OK, We Work Remotely,
   Jobicy, Himalayas, Arbeitnow) with pay parsed.
 - **Telegram channels**: posts from public channels with views, reactions and links, and which
   posts beat the channel's usual views.
@@ -83,6 +83,8 @@ environment variable `APIFY_TOKEN`. Without `uv`: `pip install adhistory-mcp`, t
 | `app_reviews` | App Store and Google Play reviews: rating, title, text, date, app version, developer reply. Star filter for complaints only. | $0.10 | 20 per app | 10-40 s |
 | `ats_jobs` | Open jobs from Greenhouse, Lever and Ashby boards: department, location, remote flag, pay when published. | $1.50 | 20 jobs | 5-30 s |
 | `bamboohr_jobs` | Open jobs from BambooHR careers pages (`company.bamboohr.com/careers`): department, location, on-site/remote/hybrid; optional posted date, pay text and description. Same fields as `ats_jobs`. | $0.80 | 20 jobs | 5-30 s |
+| `workable_jobs` | Open jobs from Workable career pages (`apply.workable.com/company`): department, job function, experience level, location, remote/hybrid/on-site, posted date; optional description. Same fields as `ats_jobs`. | $1.00 | 20 jobs | 5-30 s |
+| `personio_jobs` | Open jobs from Personio career pages (`company.jobs.personio.de`): department, offices, remote flag, employment type (incl. working student, trainee), seniority, salary with a yearly figure when published; optional description. Same fields as `ats_jobs`. | $0.80 | 20 jobs | 5-20 s |
 | `remote_jobs` | Remote jobs from Remotive, Remote OK, We Work Remotely, Jobicy, Himalayas and Arbeitnow, deduplicated: company, allowed location, posted date, apply link, pay parsed to min/max/currency/period and a yearly figure. Filters for keywords, location, age and minimum pay. | $1.00 | 20 jobs | 5-30 s |
 | `telegram_posts` | Posts from public Telegram channels: text, date, views, reactions, links, hashtags, plus views vs the channel median, view rate and best hour. Filters for keywords, age and minimum views. | $0.35 | 20 posts | 5-30 s |
 | `fda_recalls` | FDA food, drug and medical device recalls from openFDA: class, status, firm, product, lot codes, reason, distribution, dates. Filters for keywords, class, status, firm state and date range. | $1.00 | 20 recalls, last 30 days | 5-30 s |
@@ -113,6 +115,10 @@ at the time of writing; the Store page of each Actor is the source of truth.
   → `ats_jobs(boards=["https://boards.greenhouse.io/airbnb", "https://jobs.lever.co/palantir"], search_text="data")`
 - "What is Kiln hiring for on BambooHR, with posted dates?"
   → `bamboohr_jobs(companies=["https://kiln.bamboohr.com/careers"], include_description=true)`
+- "Which remote roles are open at Hack The Box on Workable?"
+  → `workable_jobs(accounts=["https://apply.workable.com/hack-the-box-ltd"], workplace_types=["remote"])`
+- "Which tado and Chrono24 jobs publish a salary? Show it per year."
+  → `personio_jobs(companies=["tado", "chrono24"], with_salary_only=true, language="en")`
 - "Find remote Python jobs posted this week that pay at least $120k."
   → `remote_jobs(search_text="python", posted_within_days=7, min_yearly_salary=120000)`
 - "Which of these Telegram channels' posts got the most views this month?"
