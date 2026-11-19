@@ -33,6 +33,7 @@ EXPECTED_TOOLS = {
     "bamboohr_jobs",
     "workable_jobs",
     "personio_jobs",
+    "recruitee_jobs",
     "fda_recalls",
     "sec_filings",
     "ssl_certificates",
@@ -224,6 +225,18 @@ CASES = [
             "language": "en",
             "includeDescription": False,
             "maxItems": 20,
+        },
+    ),
+    (
+        "recruitee_jobs",
+        {"companies": ["https://bunq.recruitee.com", "channable"], "with_salary_only": True, "max_items": 12},
+        "recruitee-jobs-export",
+        {
+            "companies": ["https://bunq.recruitee.com", "channable"],
+            "remoteOnly": False,
+            "withSalaryOnly": True,
+            "includeDescription": False,
+            "maxItems": 12,
         },
     ),
     (
