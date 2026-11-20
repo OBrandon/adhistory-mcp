@@ -3,10 +3,10 @@
 <!-- mcp-name: io.github.OBrandon/adhistory-mcp -->
 
 An MCP server that gives AI agents (Claude Desktop, Claude Code, Cursor and any other MCP client)
-twenty-two data tools: competitor Google ads, App Store and Google Play reviews, open jobs from
+twenty-three data tools: competitor Google ads, App Store and Google Play reviews, open jobs from
 Greenhouse, Lever, Ashby, BambooHR, Workable, Personio, Recruitee and six remote job boards, public Telegram channel posts, FDA
 recalls, SEC EDGAR filings and key financials, journalist source requests (#JournoRequest), PDF tables,
-bank statements, invoices, payslips, tables in images, email list cleaning, website screenshots,
+Word document tables, bank statements, invoices, payslips, tables in images, email list cleaning, website screenshots,
 broken links, SSL certificate checks and public Google Sheets.
 
 ## Install
@@ -56,6 +56,7 @@ claude mcp add adhistory --env APIFY_TOKEN=apify_api_your_token_here -- uvx adhi
   deadline, outlet, request type and topics parsed.
 - **Google Sheets**: read a tab of a public Google Sheet as rows keyed by column name.
 - **PDF tables**: tables from PDF links as rows, plus CSV and Excel.
+- **Word tables**: every table in .docx files or shared Google Docs as rows, plus CSV and Excel.
 - **Bank statements**: statement PDFs as transactions, balances and a balance check.
 - **Invoices**: invoice PDFs as number, dates, vendor, totals, tax and line items.
 - **Payslips**: payslip PDFs as gross, tax, deductions, net pay and earnings lines.
@@ -92,6 +93,7 @@ environment variable `APIFY_TOKEN`. Without `uv`: `pip install adhistory-mcp`, t
 | `sec_filings` | SEC EDGAR filings by ticker or CIK: form, dates, accession number, 8-K items in plain English, document links. Or XBRL key financials per 10-K/10-Q (`mode: financials`). | $0.40 | 20 rows | 5-30 s |
 | `journalist_requests` | Journalist source requests (#JournoRequest, #PRrequest ...) from Bluesky and Mastodon: text, parsed deadline, outlet, request type, topics, how to respond. | $1.00 | 20 requests, last 7 days | 10-60 s |
 | `pdf_tables` | Tables from PDF links as rows, plus CSV and Excel links. | $2.00 | 10 tables | 10-60 s |
+| `word_tables_to_excel` | Every table in Word (.docx) files or Google Docs shared by link: heading above it, columns, rows keyed by header (merged cells filled in), plus CSV and Excel links. No old .doc files. | $1.50 | 10 tables | 10-30 s |
 | `bank_statement` | Bank statement PDFs as balances, totals, a balance check and transactions, plus Excel. | $15.00 | 5 statements | 10-40 s |
 | `invoice` | Invoice PDFs as number, dates, vendor, totals, tax and line items, plus Excel. | $5.00 | 10 invoices | 10-30 s |
 | `payslip` | Payslip PDFs as employee, pay period, gross, tax, deductions, net pay, earnings and deduction lines, plus Excel. | $5.00 | 10 payslips | 10-30 s |
@@ -133,6 +135,7 @@ at the time of writing; the Store page of each Actor is the source of truth.
 - "Find open journalist requests about personal finance I can still answer."
   → `journalist_requests(keywords=["finance", "mortgage"], skip_expired=true)`
 - "Pull the table on pages 1-3 of this PDF into rows." → `pdf_tables(pdf_urls=["https://.../report.pdf"], pages="1-3")`
+- "Put every table in this Word contract into Excel." → `word_tables_to_excel(doc_urls=["https://.../contract.docx"])`
 - "Total the debits in this statement by merchant." → `bank_statement(pdf_urls=["https://.../statement.pdf"])`
 - "Turn these payslips into one net-pay-by-month table." → `payslip(pdf_urls=[...])`
 - "Get the table out of this screenshot." → `image_tables(image_urls=["https://.../table.png"])`
@@ -161,6 +164,8 @@ at the time of writing; the Store page of each Actor is the source of truth.
   tell whether a specific mailbox exists.
 - The PDF tools need text-based PDFs at public URLs; scanned images are not read. Local files
   must be uploaded somewhere public first.
+- `word_tables_to_excel` reads .docx files and Google Docs shared as "Anyone with the link"; old
+  Word 97-2003 `.doc`, `.odt` and `.rtf` files must be saved as .docx first.
 - `competitor_google_ads` reads what Google publishes in the Transparency Center. Google does not
   publish ad spend, keywords or click data.
 - Pages behind a login are not supported by `website_screenshot` and `broken_links`.

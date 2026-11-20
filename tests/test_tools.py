@@ -26,6 +26,7 @@ EXPECTED_TOOLS = {
     "invoice",
     "payslip",
     "image_tables",
+    "word_tables_to_excel",
     "clean_email_list",
     "website_screenshot",
     "broken_links",
@@ -171,6 +172,19 @@ CASES = [
         {"image_urls": ["https://example.com/t.png"]},
         "image-tables-to-excel",
         {"imageUrls": ["https://example.com/t.png"], "firstRowIsHeader": True, "maxItems": 5},
+    ),
+    (
+        "word_tables_to_excel",
+        {"doc_urls": ["https://example.com/a.docx"], "min_rows": 2},
+        "word-tables-to-excel",
+        {
+            "docUrls": ["https://example.com/a.docx"],
+            "firstRowIsHeader": True,
+            "repeatMergedCells": True,
+            "includeNestedTables": True,
+            "minRows": 2,
+            "maxItems": 10,
+        },
     ),
     (
         "clean_email_list",

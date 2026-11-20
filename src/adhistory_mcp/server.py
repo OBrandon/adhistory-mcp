@@ -21,7 +21,7 @@ INSTRUCTIONS = (
     "Tools that run adhistory's Apify Actors: Google Ads Transparency Center ads, App Store and "
     "Google Play reviews, Greenhouse/Lever/Ashby, BambooHR, Workable, Personio and Recruitee job exports, remote jobs from six "
     "remote job boards, public Telegram channel posts, FDA recalls, SEC EDGAR filings and key financials, "
-    "journalist source requests (#JournoRequest), PDF table, bank "
+    "journalist source requests (#JournoRequest), PDF table, Word (.docx) table, bank "
     "statement, invoice, payslip and table-image extraction, email list cleaning, website screenshots, broken link "
     "and SSL certificate checks, and reading public Google Sheets. Each call runs on the user's Apify account and costs cents at the default limits; "
     "keep limits small unless the user asks for more."
@@ -1029,6 +1029,55 @@ async def image_tables(
         limit=max_tables,
     )
     return shape_items(items, actor=actor, max_items=max_tables, max_list=100, max_str=200)
+
+
+@mcp.tool(
+    title="Word document tables to rows",
+    annotations=READ_ONLY,
+    description=(
+        "Extract every table from Word documents at public URLs. Each item is one table: source document, table "
+        "number, the heading written above it, column names, row count, rows as objects keyed by the header "
+        "(first 50 shown here), and links to the table as CSV and to the document's Excel file (one sheet per "
+        "table). Merged cells are repeated into every cell they span; numbers like 1,250 come back as numbers. "
+        "Honest limits: .docx files and Google Docs shared as 'Anyone with the link' only; old .doc (Word "
+        "97-2003), PDF, .odt and .rtf are not read; links must download without a login. Use 'sample' as a "
+        "link to try a built-in example. "
+        "Cost: $1.50 per 1,000 tables on the user's Apify account (documents that fail or have no tables are free). "
+        "Latency: usually 10-30 s."
+    ),
+)
+async def word_tables_to_excel(
+    doc_urls: Annotated[
+        list[str],
+        Field(
+            min_length=1,
+            max_length=20,
+            description="Links to .docx files or shared Google Docs (https://...), reachable without a login.",
+        ),
+    ],
+    first_row_is_header: Annotated[bool, Field(description="Use each table's first row as column names.")] = True,
+    repeat_merged_cells: Annotated[
+        bool, Field(description="Copy a merged cell's value into every cell it spans.")
+    ] = True,
+    include_nested_tables: Annotated[bool, Field(description="Also return tables nested inside table cells.")] = True,
+    min_rows: Annotated[int, Field(ge=1, le=100, description="Skip tables with fewer data rows than this.")] = 1,
+    max_tables: Annotated[int, Field(ge=1, le=100, description="Stop after this many tables.")] = 10,
+) -> dict[str, Any]:
+    actor = "word-tables-to-excel"
+    items = await run_actor(
+        actor,
+        {
+            "docUrls": doc_urls,
+            "firstRowIsHeader": first_row_is_header,
+            "repeatMergedCells": repeat_merged_cells,
+            "includeNestedTables": include_nested_tables,
+            "minRows": min_rows,
+            "maxItems": max_tables,
+        },
+        timeout_s=240,
+        limit=max_tables,
+    )
+    return shape_items(items, actor=actor, max_items=max_tables, max_list=50, max_str=300)
 
 
 # --------------------------------------------------------------------------------------------
