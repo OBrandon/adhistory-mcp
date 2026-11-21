@@ -1080,6 +1080,58 @@ async def word_tables_to_excel(
     return shape_items(items, actor=actor, max_items=max_tables, max_list=50, max_str=300)
 
 
+@mcp.tool(
+    title="Web page HTML tables to rows",
+    annotations=READ_ONLY,
+    description=(
+        "Extract the data tables from public web pages (HTML <table> elements). Each item is one table: page URL, "
+        "table number, its caption or the heading above it, column names (two-row headers joined), row count, rows "
+        "as objects keyed by the header (first 50 shown here), and links to the table as CSV and to the page's "
+        "Excel file (one sheet per table). Merged cells are repeated into every cell they span, footnote marks like "
+        "[1] are removed, and 1,250 / $12.99 / 7.5% come back as numbers. Menus and layout tables are skipped. "
+        "Honest limits: tables drawn by JavaScript after the page loads are not read; pages behind a login, or "
+        "that answer 401/403 to automated requests (some large sites do), are reported as failed. Use 'sample' "
+        "as a link to try a built-in example. "
+        "Cost: $1.50 per 1,000 tables on the user's Apify account (pages that fail or have no tables are free). "
+        "Latency: usually 5-30 s."
+    ),
+)
+async def html_tables_to_excel(
+    page_urls: Annotated[
+        list[str],
+        Field(
+            min_length=1,
+            max_length=20,
+            description="Links to public web pages (https://...) that contain HTML tables.",
+        ),
+    ],
+    first_row_is_header: Annotated[bool, Field(description="Use each table's header row as column names.")] = True,
+    repeat_merged_cells: Annotated[
+        bool, Field(description="Copy a merged cell's value into every cell it spans.")
+    ] = True,
+    skip_layout_tables: Annotated[
+        bool, Field(description="Skip menus, navigation boxes, infoboxes and single-column layout tables.")
+    ] = True,
+    min_rows: Annotated[int, Field(ge=1, le=100, description="Skip tables with fewer data rows than this.")] = 2,
+    max_tables: Annotated[int, Field(ge=1, le=100, description="Stop after this many tables.")] = 10,
+) -> dict[str, Any]:
+    actor = "html-tables-to-excel"
+    items = await run_actor(
+        actor,
+        {
+            "pageUrls": page_urls,
+            "firstRowIsHeader": first_row_is_header,
+            "repeatMergedCells": repeat_merged_cells,
+            "skipLayoutTables": skip_layout_tables,
+            "minRows": min_rows,
+            "maxItems": max_tables,
+        },
+        timeout_s=240,
+        limit=max_tables,
+    )
+    return shape_items(items, actor=actor, max_items=max_tables, max_list=50, max_str=300)
+
+
 # --------------------------------------------------------------------------------------------
 # Email and websites
 # --------------------------------------------------------------------------------------------
